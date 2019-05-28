@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.7-slim
 MAINTAINER Andre Boechat <andre.boechat@neoway.com.br>
 
 RUN apt-get update \
@@ -28,25 +28,17 @@ ENV PYTHONIOENCODING UTF-8
 ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 
 # JAVA
-# http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
-# http://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/server-jre-8u201-linux-x64.tar.gz
-ARG JAVA_MAJOR_VERSION=8
-ARG JAVA_UPDATE_VERSION=201
-ARG JAVA_BUILD_NUMBER=09
-ARG JAVA_MD5=42970487e3af4f5aa5bca3f542482c60
-ENV JAVA_HOME /usr/jdk1.${JAVA_MAJOR_VERSION}.0_${JAVA_UPDATE_VERSION}
-
-ENV PATH $PATH:$JAVA_HOME/bin
-RUN curl -sL --retry 3 --insecure \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie;" \
-  "http://download.oracle.com/otn-pub/java/jdk/${JAVA_MAJOR_VERSION}u${JAVA_UPDATE_VERSION}-b${JAVA_BUILD_NUMBER}/${JAVA_MD5}/server-jre-${JAVA_MAJOR_VERSION}u${JAVA_UPDATE_VERSION}-linux-x64.tar.gz" \
-  | gunzip \
-  | tar x -C /usr/ \
-  && ln -s $JAVA_HOME /usr/java \
-  && rm -rf $JAVA_HOME/man
+RUN apt-get update \
+ # To fix installation of openjdk
+ # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=863199#23
+ && mkdir -p /usr/share/man/man1 \
+ && apt-get install -y --no-install-recommends openjdk-8-jre-headless \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 # HADOOP
-ENV HADOOP_VERSION 2.9.1
+ENV HADOOP_VERSION 2.9.2
 ENV HADOOP_HOME /usr/hadoop-$HADOOP_VERSION
 ENV HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
 ENV PATH $PATH:$HADOOP_HOME/bin
@@ -58,7 +50,7 @@ RUN curl -sL --retry 3 \
  && chown -R root:root $HADOOP_HOME
 
 # SPARK
-ENV SPARK_VERSION 2.4.0
+ENV SPARK_VERSION 2.4.3
 ENV SPARK_PACKAGE spark-${SPARK_VERSION}-bin-without-hadoop
 ENV SPARK_HOME /usr/spark-${SPARK_VERSION}
 ENV SPARK_DIST_CLASSPATH="$HADOOP_HOME/etc/hadoop/*:$HADOOP_HOME/share/hadoop/common/lib/*:$HADOOP_HOME/share/hadoop/common/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/hdfs/lib/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/yarn/lib/*:$HADOOP_HOME/share/hadoop/yarn/*:$HADOOP_HOME/share/hadoop/mapreduce/lib/*:$HADOOP_HOME/share/hadoop/mapreduce/*:$HADOOP_HOME/share/hadoop/tools/lib/*"
