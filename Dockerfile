@@ -1,5 +1,5 @@
 FROM python:3.7-slim
-MAINTAINER Andre Boechat <andre.boechat@neoway.com.br>
+MAINTAINER Andre Boechat <boechat107@gmail.com>
 
 RUN apt-get update \
  && apt-get install -y locales \
